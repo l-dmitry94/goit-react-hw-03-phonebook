@@ -6,6 +6,8 @@ import ContactList from './ContactList/ContactList';
 import Filter from './Filter/Filter';
 import { ContactListHeader, Container, PhonebookHeader, Section } from './App.styled';
 
+const LOCALSTORAGE_KEY = 'contacts-key';
+
 class App extends Component {
     state = {
         contacts: [
@@ -16,6 +18,25 @@ class App extends Component {
         ],
         filter: '',
     };
+    componentDidMount() {
+        const savedState = localStorage.getItem(LOCALSTORAGE_KEY);
+
+        if (savedState) {
+            const savedContacts = JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY));
+            this.setState({ contacts: savedContacts });
+        }
+    }
+
+    componentDidUpdate(_, prevState) {
+        const { contacts } = this.state;
+        if (prevState.contacts !== contacts) {
+            if (!contacts.length) {
+                localStorage.removeItem(LOCALSTORAGE_KEY);
+            } else {
+                localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(contacts));
+            }
+        }
+    }
 
     formSubmitHandler = data => {
         const { contacts } = this.state;
@@ -25,7 +46,9 @@ class App extends Component {
             ...data,
         };
 
-        const inContacts = contacts.some(({ name }) => name.toLowerCase() === contact.name.toLowerCase());
+        const inContacts = contacts.some(
+            ({ name }) => name.toLowerCase() === contact.name.toLowerCase()
+        );
 
         if (inContacts) {
             alert(`${contact.name} is already in contacts.`);
@@ -45,7 +68,7 @@ class App extends Component {
 
     getVisibleContacts = () => {
         const { contacts, filter } = this.state;
-        
+
         const normilizedFilter = filter.toLowerCase();
         return contacts.filter(contact => contact.name.toLowerCase().includes(normilizedFilter));
     };
@@ -57,7 +80,7 @@ class App extends Component {
     };
 
     render() {
-        const { filter } = this.state;
+        const { contacts, filter } = this.state;
 
         const visibleContacts = this.getVisibleContacts();
         return (
@@ -67,8 +90,21 @@ class App extends Component {
                     <ContactForm onSubmit={this.formSubmitHandler} />
 
                     <ContactListHeader>Contacts</ContactListHeader>
-                    <Filter value={filter} onChange={this.handleChange} />
-                    <ContactList contacts={visibleContacts} onDeleteContact={this.deleteContact} />
+                    {contacts.length > 0 ? (
+                        <>
+                            <Filter value={filter} onChange={this.handleChange} />
+                            {visibleContacts.length > 0 ? (
+                                <ContactList
+                                    contacts={visibleContacts}
+                                    onDeleteContact={this.deleteContact}
+                                />
+                            ) : (
+                                <p>No contacts found</p>
+                            )}
+                        </>
+                    ) : (
+                        "There's nothing here"
+                    )}
                 </Container>
             </Section>
         );

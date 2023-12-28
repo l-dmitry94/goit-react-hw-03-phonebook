@@ -9,7 +9,7 @@ const nameId = nanoid();
 const numberId = nanoid();
 
 const schema = yup.object({
-    name: yup.string().max(12).required(),
+    name: yup.string().max(32).required(),
     number: yup.string().min(6).max(12).required(),
 });
 
